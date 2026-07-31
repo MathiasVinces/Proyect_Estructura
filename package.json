@@ -1,0 +1,13 @@
+{
+  "name": "sistema-logistica-paquetes",
+  "version": "1.0.0",
+  "description": "Sistema de Logística y Envíos de Paquetes - Fase 1: Estructuras Base",
+  "main": "src/test_fase1.js",
+  "type": "module",
+  "scripts": {
+    "test": "node src/test_fase1.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
