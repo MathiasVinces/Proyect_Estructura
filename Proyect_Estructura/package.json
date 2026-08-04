@@ -1,0 +1,27 @@
+{
+  "name": "expreslogistics-estructura-datos",
+  "version": "1.0.0",
+  "description": "Dashboard de Logística y Envíos de Paquetes implementado con Estructuras de Datos. Proyecto Final - Materia: Estructura de Datos, Tercer Semestre PUCEM.",
+  "type": "module",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "estructuras-de-datos",
+    "lista-enlazada",
+    "pila",
+    "cola",
+    "arbol-bst",
+    "grafo",
+    "logistica",
+    "javascript"
+  ],
+  "authors": [
+    "Cristhian Eduardo Avila Vera",
+    "Mathias Alexander Vinces Mero"
+  ],
+  "institution": "PUCEM - Pontificia Universidad Católica del Ecuador Manabí",
+  "course": "Estructura de Datos - Tercer Semestre",
+  "license": "MIT"
+}

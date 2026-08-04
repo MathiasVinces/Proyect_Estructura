@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LogiExpress</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header id="nav">
+  <div class="brand">
+    <div class="brand-logo">LE</div>
+    LogiExpress
+  </div>
+</header>
+
+<!-- Barra de pestañas -->
+<nav class="tabs-bar">
+  <button class="tab-btn active" data-tab="resumen">📊 Resumen</button>
+  <button class="tab-btn" data-tab="clientes">👥 Clientes</button>
+  <button class="tab-btn" data-tab="tarifas">💰 Tarifas</button>
+  <button class="tab-btn" data-tab="operaciones">🚚 Operaciones</button>
+  <button class="tab-btn" data-tab="rutas">🗺️ Rutas</button>
+</nav>
+
+<main id="app">
+
+  <!-- PESTAÑA 1: RESUMEN -->
+  <div class="tab-panel active" id="tab-resumen">
+    <div class="g4" style="margin-bottom:24px;">
+      <div class="card"><div class="stat-icon ic-blue">📦</div><div class="stat-val" id="s-pkg">0</div><div class="stat-lbl">Paquetes</div></div>
+      <div class="card"><div class="stat-icon ic-green">👥</div><div class="stat-val" id="s-cli">0</div><div class="stat-lbl">Clientes</div></div>
+      <div class="card"><div class="stat-icon ic-orange">🚚</div><div class="stat-val" id="s-cola">0</div><div class="stat-lbl">En Despacho</div></div>
+      <div class="card"><div class="stat-icon ic-purple">🔀</div><div class="stat-val" id="s-rut">0</div><div class="stat-lbl">Rutas Activas</div></div>
+    </div>
+
+    <div class="hero">
+      <h2>🔍 Rastreo Express por ID</h2>
+      <p>Ingresa el Tracking ID del paquete para localizarlo usando el Árbol BST</p>
+      <div class="hero-row">
+        <input id="bst-input" type="number" placeholder="Ej: 101, 105, 110…" />
+        <button id="btn-buscar">Rastrear</button>
+      </div>
+      <div id="bst-result">
+        <div class="res-grid">
+          <div class="res-item"><label>Tracking ID</label><p id="r-id">—</p></div>
+          <div class="res-item"><label>Estado</label><p id="r-estado">—</p></div>
+          <div class="res-item"><label>Destino</label><p id="r-destino">—</p></div>
+          <div class="res-item"><label>Peso</label><p id="r-peso">—</p></div>
+          <div class="res-item"><label>Costo</label><p id="r-costo">—</p></div>
+          <div class="res-item"><label>Cliente ID</label><p id="r-cliente">—</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PESTAÑA 2: CLIENTES Y PAQUETES -->
+  <div class="tab-panel" id="tab-clientes">
+    <div class="sec-head">
+      <div><p class="sec-title">Gestión de Clientes</p><p class="sec-sub">Lista Enlazada · CRUD</p></div>
+      <button class="btn btn-primary" id="btn-add-cliente">+ Agregar Cliente</button>
+    </div>
+    <div class="g-auto">
+      <div class="card">
+        <table><thead><tr><th>ID Cliente</th><th>Nombre</th><th>Teléfono</th><th>Ciudad</th><th></th></tr></thead>
+          <tbody id="tbody-clientes"></tbody>
+        </table>
+        <div class="empty" id="cli-empty" style="display:none">Sin clientes registrados</div>
+      </div>
+      <div class="card">
+        <p style="font-size:16px;font-weight:600;margin-bottom:16px;">📦 Registrar Paquete</p>
+        <form id="form-pkg" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="field-group"><label class="lbl">Tracking ID</label><input class="field" id="pkg-id" type="number" placeholder="5010" /></div>
+          <div class="field-group"><label class="lbl">ID Cliente</label><input class="field" id="pkg-cli" type="number" placeholder="1" /></div>
+          <div class="field-group"><label class="lbl">Peso (kg)</label><input class="field" id="pkg-peso" type="number" step="0.1" placeholder="3.5" /></div>
+          <div class="field-group"><label class="lbl">Destino</label><input class="field" id="pkg-dest" type="text" placeholder="Guayaquil" /></div>
+          <button class="btn btn-primary" type="submit">📤 Registrar y Encolar</button>
+        </form>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <p style="font-size:16px;font-weight:600;margin-bottom:14px;">📦 Paquetes Registrados</p>
+      <table><thead><tr><th>Tracking ID</th><th>ID Cliente</th><th>Destino</th><th>Peso</th><th>Costo</th><th>Estado</th></tr></thead>
+        <tbody id="tbody-paquetes"></tbody>
+      </table>
+      <div class="empty" id="pkg-empty" style="display:none">Sin paquetes registrados</div>
+    </div>
+  </div>
+
+  <!-- PESTAÑA 3: TARIFAS -->
+  <div class="tab-panel" id="tab-tarifas">
+    <div class="sec-head">
+      <div><p class="sec-title">Tarifas de Envío</p><p class="sec-sub">Arreglo Estático · 5 posiciones · Acceso O(1)</p></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <p style="font-size:14px;font-weight:600;color:var(--muted);margin-bottom:12px;">CATEGORÍAS DE SERVICIO</p>
+        <div id="tariff-list"></div>
+      </div>
+      <div class="card">
+        <p style="font-size:15px;font-weight:600;margin-bottom:14px;">Calculadora de Costos</p>
+        <div class="field-group"><label class="lbl">Peso del paquete (kg)</label><input class="field" id="calc-input" type="number" step="0.1" placeholder="Ej: 7.5" /></div>
+        <button class="btn btn-secondary" id="btn-calc" style="margin-top:10px;width:100%;">Calcular Tarifa</button>
+        <div class="calc-box" id="calc-box">
+          <div class="calc-cat" id="calc-cat">—</div>
+          <div class="calc-val">$<span id="calc-val">0.00</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PESTAÑA 4: OPERACIONES -->
+  <div class="tab-panel" id="tab-operaciones">
+    <div class="sec-head">
+      <div><p class="sec-title">Operaciones</p><p class="sec-sub">Cola FIFO de Despacho · Pila LIFO de Historial</p></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+          <div><p style="font-weight:600;font-size:16px;">🚚 Cola de Despacho</p><p style="font-size:12px;color:var(--muted)">FIFO · Primero en entrar, primero en salir</p></div>
+          <button class="btn btn-success btn-sm" id="btn-despachar">▶ Despachar</button>
+        </div>
+        <div class="queue-track" id="queue-track">
+          <div class="empty" id="q-empty">Cola vacía 📭</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+          <div><p style="font-weight:600;font-size:16px;">🔄 Historial de Acciones</p><p style="font-size:12px;color:var(--muted)">LIFO · Última acción en el tope</p></div>
+          <button class="btn btn-danger btn-sm" id="btn-undo">↩ Deshacer</button>
+        </div>
+        <div class="h-list" id="h-list">
+          <div class="empty" id="h-empty">Sin acciones registradas 📋</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PESTAÑA 5: RUTAS -->
+  <div class="tab-panel" id="tab-rutas">
+    <div class="sec-head">
+      <div><p class="sec-title">Red de Rutas</p><p class="sec-sub">Grafo · Lista de Adyacencia · Ciudades del Ecuador</p></div>
+    </div>
+    <div class="g-routes">
+      <div class="map-wrap">
+        <svg id="svg-map" viewBox="0 0 660 360" xmlns="http://www.w3.org/2000/svg">
+          <g id="svg-edges"></g>
+          <g id="svg-nodes"></g>
+        </svg>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:14px;">
+        <p style="font-weight:600;font-size:16px;">Conexiones Activas</p>
+        <div id="route-cards"></div>
+        <hr/>
+        <p style="font-size:14px;font-weight:600;">+ Nueva Ruta</p>
+        <form id="form-ruta" style="display:flex;flex-direction:column;gap:10px;">
+          <input class="field" id="ruta-orig" type="text"   placeholder="Ciudad Origen" />
+          <input class="field" id="ruta-dest" type="text"   placeholder="Ciudad Destino" />
+          <input class="field" id="ruta-km"   type="number" placeholder="Distancia (km)" />
+          <button class="btn btn-primary btn-sm" type="submit">Agregar Ruta</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL CLIENTE -->
+<div id="modal" class="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">Agregar Cliente</h2>
+      <button class="btn-x" id="btn-close">✕</button>
+    </div>
+    <form id="form-cliente" style="display:flex;flex-direction:column;gap:12px;">
+      <input type="hidden" id="m-id" />
+      <div class="field-group"><label class="lbl">Nombre *</label><input class="field" id="m-nombre" placeholder="Nombre completo" /></div>
+      <div class="field-group"><label class="lbl">Teléfono *</label><input class="field" id="m-tel" placeholder="0991234567" /></div>
+      <div class="field-group"><label class="lbl">Ciudad</label><input class="field" id="m-ciudad" placeholder="Quito" /></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" class="btn btn-secondary" id="btn-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
