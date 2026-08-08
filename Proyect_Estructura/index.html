@@ -1,192 +1,904 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LogiExpress</title>
+  <title>LogiExpress · Command Center</title>
+  <!-- Estilos del Command Center -->
   <link rel="stylesheet" href="css/styles.css" />
+  <!-- Leaflet Map API CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
+
 <body>
 
-<header id="nav">
-  <div class="brand">
-    <div class="brand-logo">LE</div>
-    LogiExpress
+  <!-- ESCUDO DE AUTENTICACIÓN (AUTH GATE SHIELD) -->
+  <div id="auth-gate-shield">
+    <div class="auth-gate-container">
+      <div class="auth-card-top">
+        <div class="auth-shield-icon">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        </div>
+        <h2 class="auth-card-title">LogiExpress</h2>
+        <p class="auth-card-sub" id="gate-subtitle">Portal de Seguridad · Acceso Restringido</p>
+      </div>
+
+      <!-- Selector de Pestañas: Login y Registro -->
+      <div class="auth-tab-switch">
+        <button type="button" class="auth-tab-btn active" id="gate-tab-login">Inicio de Sesión</button>
+        <button type="button" class="auth-tab-btn" id="gate-tab-register">Registro de Operador</button>
+      </div>
+
+      <!-- Formulario Login Gate -->
+      <form id="gate-form-login">
+        <div class="form-group">
+          <label class="form-label">ID de Operador o Correo</label>
+          <div class="form-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <input class="form-control" id="gate-login-ident" type="text"
+              placeholder="Ej. OP-7492 o admin@logiexpress.ec" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <label class="form-label">Contraseña</label>
+            <a href="#" style="font-size:10.5px;color:var(--accent-cyan);text-decoration:none;"
+              id="gate-forgot-pass">¿Olvidó su contraseña?</a>
+          </div>
+          <div class="form-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <input class="form-control" id="gate-login-pass" type="password" placeholder="••••••••" required />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;height:44px;margin-top:14px;">
+          <span>Iniciar Sesión →</span>
+        </button>
+
+        <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-subtle);">
+          <span
+            style="display:inline-block;width:6px;height:6px;background:var(--accent-green);border-radius:50%;margin-right:4px;"></span>
+          <span>Sistema En Línea</span>
+        </div>
+      </form>
+
+      <!-- Formulario Registro Gate con Validación de Seguridad -->
+      <form id="gate-form-register" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">NOMBRE COMPLETO</label>
+          <div class="form-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <input class="form-control" id="gate-reg-name" type="text" placeholder="Ingresa tu nombre completo"
+              required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">EMAIL CORPORATIVO</label>
+          <div class="form-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+            <input class="form-control" id="gate-reg-email" type="email" placeholder="operador@logiexpress.com"
+              required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">ID DE OPERADOR</label>
+          <div class="form-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <input class="form-control" id="gate-reg-id" type="text" placeholder="LEX-0000" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">CONTRASEÑA DE SEGURIDAD</label>
+          <div class="form-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <input class="form-control" id="gate-reg-pass" type="password" placeholder="Ingresa una clave segura"
+              required />
+          </div>
+
+          <!-- Checklist de Requisitos de Contraseña -->
+          <div class="password-reqs-card">
+            <div class="req-title">Requisitos de la contraseña:</div>
+            <div class="req-item" id="req-len">
+              <span class="req-dot">○</span>
+              <span>Mínimo 8 caracteres</span>
+            </div>
+            <div class="req-item" id="req-upper">
+              <span class="req-dot">○</span>
+              <span>Al menos una letra mayúscula (A-Z)</span>
+            </div>
+            <div class="req-item" id="req-num">
+              <span class="req-dot">○</span>
+              <span>Al menos un número (0-9)</span>
+            </div>
+            <div class="req-item" id="req-special">
+              <span class="req-dot">○</span>
+              <span>Al menos un carácter especial (!@#$%^&*)</span>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btn-gate-register"
+          style="width:100%;height:44px;margin-top:8px;">
+          <span>Autorizar Registro →</span>
+        </button>
+      </form>
+    </div>
   </div>
-</header>
 
-<!-- Barra de pestañas -->
-<nav class="tabs-bar">
-  <button class="tab-btn active" data-tab="resumen">📊 Resumen</button>
-  <button class="tab-btn" data-tab="clientes">👥 Clientes</button>
-  <button class="tab-btn" data-tab="tarifas">💰 Tarifas</button>
-  <button class="tab-btn" data-tab="operaciones">🚚 Operaciones</button>
-  <button class="tab-btn" data-tab="rutas">🗺️ Rutas</button>
-</nav>
-
-<main id="app">
-
-  <!-- PESTAÑA 1: RESUMEN -->
-  <div class="tab-panel active" id="tab-resumen">
-    <div class="g4" style="margin-bottom:24px;">
-      <div class="card"><div class="stat-icon ic-blue">📦</div><div class="stat-val" id="s-pkg">0</div><div class="stat-lbl">Paquetes</div></div>
-      <div class="card"><div class="stat-icon ic-green">👥</div><div class="stat-val" id="s-cli">0</div><div class="stat-lbl">Clientes</div></div>
-      <div class="card"><div class="stat-icon ic-orange">🚚</div><div class="stat-val" id="s-cola">0</div><div class="stat-lbl">En Despacho</div></div>
-      <div class="card"><div class="stat-icon ic-purple">🔀</div><div class="stat-val" id="s-rut">0</div><div class="stat-lbl">Rutas Activas</div></div>
-    </div>
-
-    <div class="hero">
-      <h2>🔍 Rastreo Express por ID</h2>
-      <p>Ingresa el Tracking ID del paquete para localizarlo usando el Árbol BST</p>
-      <div class="hero-row">
-        <input id="bst-input" type="number" placeholder="Ej: 101, 105, 110…" />
-        <button id="btn-buscar">Rastrear</button>
-      </div>
-      <div id="bst-result">
-        <div class="res-grid">
-          <div class="res-item"><label>Tracking ID</label><p id="r-id">—</p></div>
-          <div class="res-item"><label>Estado</label><p id="r-estado">—</p></div>
-          <div class="res-item"><label>Destino</label><p id="r-destino">—</p></div>
-          <div class="res-item"><label>Peso</label><p id="r-peso">—</p></div>
-          <div class="res-item"><label>Costo</label><p id="r-costo">—</p></div>
-          <div class="res-item"><label>Cliente ID</label><p id="r-cliente">—</p></div>
+  <!-- BARRA LATERAL (SIDEBAR) -->
+  <aside id="sidebar">
+    <div class="sidebar-top">
+      <div class="brand-header">
+        <div class="brand-icon-box">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M21 16.5l-9 5.2-9-5.2V7.5l9-5.2 9 5.2v9zM12 4.1L5.2 8 12 11.9 18.8 8 12 4.1zm-7 5.4v6.8l6 3.5V13L5 9.5zm8 10.3l6-3.5V9.5L13 13v6.8z" />
+          </svg>
+        </div>
+        <div class="brand-info">
+          <span class="brand-title">LogiExpress</span>
+          <span class="brand-subtitle">COMMAND CENTER</span>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- PESTAÑA 2: CLIENTES Y PAQUETES -->
-  <div class="tab-panel" id="tab-clientes">
-    <div class="sec-head">
-      <div><p class="sec-title">Gestión de Clientes</p><p class="sec-sub">Lista Enlazada · CRUD</p></div>
-      <button class="btn btn-primary" id="btn-add-cliente">+ Agregar Cliente</button>
-    </div>
-    <div class="g-auto">
-      <div class="card">
-        <table><thead><tr><th>ID Cliente</th><th>Nombre</th><th>Teléfono</th><th>Ciudad</th><th></th></tr></thead>
-          <tbody id="tbody-clientes"></tbody>
-        </table>
-        <div class="empty" id="cli-empty" style="display:none">Sin clientes registrados</div>
-      </div>
-      <div class="card">
-        <p style="font-size:16px;font-weight:600;margin-bottom:16px;">📦 Registrar Paquete</p>
-        <form id="form-pkg" style="display:flex;flex-direction:column;gap:12px;">
-          <div class="field-group"><label class="lbl">Tracking ID</label><input class="field" id="pkg-id" type="number" placeholder="5010" /></div>
-          <div class="field-group"><label class="lbl">ID Cliente</label><input class="field" id="pkg-cli" type="number" placeholder="1" /></div>
-          <div class="field-group"><label class="lbl">Peso (kg)</label><input class="field" id="pkg-peso" type="number" step="0.1" placeholder="3.5" /></div>
-          <div class="field-group"><label class="lbl">Destino</label><input class="field" id="pkg-dest" type="text" placeholder="Guayaquil" /></div>
-          <button class="btn btn-primary" type="submit">📤 Registrar y Encolar</button>
-        </form>
-      </div>
-    </div>
-    <div class="card" style="margin-top:20px;">
-      <p style="font-size:16px;font-weight:600;margin-bottom:14px;">📦 Paquetes Registrados</p>
-      <table><thead><tr><th>Tracking ID</th><th>ID Cliente</th><th>Destino</th><th>Peso</th><th>Costo</th><th>Estado</th></tr></thead>
-        <tbody id="tbody-paquetes"></tbody>
-      </table>
-      <div class="empty" id="pkg-empty" style="display:none">Sin paquetes registrados</div>
-    </div>
-  </div>
+      <nav class="nav-group" role="navigation">
+        <button class="nav-link active" data-view="resumen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+          <span>Resumen</span>
+        </button>
 
-  <!-- PESTAÑA 3: TARIFAS -->
-  <div class="tab-panel" id="tab-tarifas">
-    <div class="sec-head">
-      <div><p class="sec-title">Tarifas de Envío</p><p class="sec-sub">Arreglo Estático · 5 posiciones · Acceso O(1)</p></div>
-    </div>
-    <div class="g2">
-      <div class="card">
-        <p style="font-size:14px;font-weight:600;color:var(--muted);margin-bottom:12px;">CATEGORÍAS DE SERVICIO</p>
-        <div id="tariff-list"></div>
-      </div>
-      <div class="card">
-        <p style="font-size:15px;font-weight:600;margin-bottom:14px;">Calculadora de Costos</p>
-        <div class="field-group"><label class="lbl">Peso del paquete (kg)</label><input class="field" id="calc-input" type="number" step="0.1" placeholder="Ej: 7.5" /></div>
-        <button class="btn btn-secondary" id="btn-calc" style="margin-top:10px;width:100%;">Calcular Tarifa</button>
-        <div class="calc-box" id="calc-box">
-          <div class="calc-cat" id="calc-cat">—</div>
-          <div class="calc-val">$<span id="calc-val">0.00</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
+        <button class="nav-link" data-view="clientes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+          </svg>
+          <span>Clientes</span>
+        </button>
 
-  <!-- PESTAÑA 4: OPERACIONES -->
-  <div class="tab-panel" id="tab-operaciones">
-    <div class="sec-head">
-      <div><p class="sec-title">Operaciones</p><p class="sec-sub">Cola FIFO de Despacho · Pila LIFO de Historial</p></div>
-    </div>
-    <div class="g2">
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-          <div><p style="font-weight:600;font-size:16px;">🚚 Cola de Despacho</p><p style="font-size:12px;color:var(--muted)">FIFO · Primero en entrar, primero en salir</p></div>
-          <button class="btn btn-success btn-sm" id="btn-despachar">▶ Despachar</button>
-        </div>
-        <div class="queue-track" id="queue-track">
-          <div class="empty" id="q-empty">Cola vacía 📭</div>
-        </div>
-      </div>
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-          <div><p style="font-weight:600;font-size:16px;">🔄 Historial de Acciones</p><p style="font-size:12px;color:var(--muted)">LIFO · Última acción en el tope</p></div>
-          <button class="btn btn-danger btn-sm" id="btn-undo">↩ Deshacer</button>
-        </div>
-        <div class="h-list" id="h-list">
-          <div class="empty" id="h-empty">Sin acciones registradas 📋</div>
-        </div>
-      </div>
-    </div>
-  </div>
+        <button class="nav-link" data-view="tarifas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <line x1="2" y1="10" x2="22" y2="10" />
+          </svg>
+          <span>Tarifas</span>
+        </button>
 
-  <!-- PESTAÑA 5: RUTAS -->
-  <div class="tab-panel" id="tab-rutas">
-    <div class="sec-head">
-      <div><p class="sec-title">Red de Rutas</p><p class="sec-sub">Grafo · Lista de Adyacencia · Ciudades del Ecuador</p></div>
+        <button class="nav-link" data-view="operaciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="3" width="15" height="13" />
+            <polygon points="16 8 20 8 23 11 23 16 16 16 8" />
+            <circle cx="5.5" cy="18.5" r="2.5" />
+            <circle cx="18.5" cy="18.5" r="2.5" />
+          </svg>
+          <span>Operaciones</span>
+        </button>
+
+        <button class="nav-link" data-view="rutas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="10" r="3" />
+            <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z" />
+          </svg>
+          <span>Rutas</span>
+        </button>
+      </nav>
     </div>
-    <div class="g-routes">
-      <div class="map-wrap">
-        <svg id="svg-map" viewBox="0 0 660 360" xmlns="http://www.w3.org/2000/svg">
-          <g id="svg-edges"></g>
-          <g id="svg-nodes"></g>
+
+    <div class="sidebar-footer">
+      <button class="nav-link" id="btn-open-settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+        <span>Ajustes</span>
+      </button>
+
+      <button class="nav-link" id="btn-open-support">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+        <span>Soporte</span>
+      </button>
+
+      <div class="operator-card" id="btn-operator-profile" title="Clic para cerrar sesión">
+        <div class="operator-left">
+          <div class="operator-avatar" id="sidebar-user-avatar">LX</div>
+          <div class="operator-meta">
+            <span class="operator-name" id="sidebar-user-name">LogiExpress Operator</span>
+            <span class="operator-id" id="sidebar-user-id">ID: 9482-LX</span>
+          </div>
+        </div>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
         </svg>
       </div>
-      <div class="card" style="display:flex;flex-direction:column;gap:14px;">
-        <p style="font-weight:600;font-size:16px;">Conexiones Activas</p>
-        <div id="route-cards"></div>
-        <hr/>
-        <p style="font-size:14px;font-weight:600;">+ Nueva Ruta</p>
-        <form id="form-ruta" style="display:flex;flex-direction:column;gap:10px;">
-          <input class="field" id="ruta-orig" type="text"   placeholder="Ciudad Origen" />
-          <input class="field" id="ruta-dest" type="text"   placeholder="Ciudad Destino" />
-          <input class="field" id="ruta-km"   type="number" placeholder="Distancia (km)" />
-          <button class="btn btn-primary btn-sm" type="submit">Agregar Ruta</button>
-        </form>
-      </div>
     </div>
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL Y BARRA SUPERIOR -->
+  <div id="main-wrapper">
+
+    <!-- Topbar -->
+    <header id="topbar">
+      <div class="topbar-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input id="global-search-input" type="text"
+          placeholder="Buscar por BST Tracking ID (8492), Cliente (CLI-0042) o destino..." />
+        <span class="search-shortcut">⌘K</span>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="topbar-profile" id="topbar-avatar-btn" title="Perfil de Operador">
+          <span id="topbar-user-initials">LX</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Área de Vistas -->
+    <main id="content-area">
+
+      <!-- VISTA 1: RESUMEN OPERATIVO -->
+      <section class="view-section active" id="view-resumen">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>Resumen Operativo</h1>
+            <div class="view-status-line">
+              <span class="status-dot-pulse"></span>
+              <span>Sistema en línea y operando normalmente. Última actualización: <strong id="live-clock">14:02:45
+                  UTC</strong></span>
+            </div>
+          </div>
+          <div class="header-action-group">
+            <button class="btn btn-primary" id="btn-new-shipment-top">
+              <span>+ Nuevo Envío</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tarjetas de Métricas -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-top">
+              <div class="metric-icon-wrap ic-blue-bg">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                </svg>
+              </div>
+              <span class="metric-label">Envíos Activos</span>
+            </div>
+            <div class="metric-bottom">
+              <span class="metric-val" id="metric-pkg-count">4</span>
+              <span class="trend-tag trend-up">↗ +12%</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-top">
+              <div class="metric-icon-wrap ic-amber-bg">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                </svg>
+              </div>
+              <span class="metric-label">Clientes Totales</span>
+            </div>
+            <div class="metric-bottom">
+              <span class="metric-val" id="metric-cli-count">3</span>
+              <span class="trend-tag trend-neutral">estable</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-top">
+              <div class="metric-icon-wrap ic-green-bg">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              </div>
+              <span class="metric-label">Eficiencia de Ruta</span>
+            </div>
+            <div class="metric-bottom">
+              <span class="metric-val" id="metric-efficiency">94.2%</span>
+              <span class="trend-tag trend-up">↗ +2.1%</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-top">
+              <div class="metric-icon-wrap ic-purple-bg">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <line x1="2" y1="10" x2="22" y2="10" />
+                </svg>
+              </div>
+              <span class="metric-label">Ingresos Hoy</span>
+            </div>
+            <div class="metric-bottom">
+              <span class="metric-val" id="metric-revenue">$1,260.00</span>
+              <span class="trend-tag trend-up">↗ +8.4%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mapa de Ecuador y Cola de Operaciones -->
+        <div class="dash-split-grid">
+          <div class="map-panel">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="10" r="3" />
+                  <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z" />
+                </svg>
+                <span id="map-header-title">Mapa de Rutas Activas</span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-secondary btn-sm" id="btn-toggle-map-mode" style="padding:3px 8px;font-size:10.5px;">
+                  Modo de grafo
+                </button>
+              </div>
+            </div>
+
+            <div class="map-viewport">
+              <!-- Mapa Satelital de Ecuador (Leaflet) -->
+              <div id="leaflet-map"></div>
+              <!-- Vista Vectorial SVG con Paneo y Zoom -->
+              <svg id="svg-map" viewBox="0 0 660 290" style="display:none;cursor:grab;">
+                <g id="svg-pan-layer">
+                  <g id="svg-edges"></g>
+                  <g id="svg-nodes"></g>
+                </g>
+              </svg>
+              <!-- Controles Flotantes de Zoom para el Grafo -->
+              <div id="svg-nav-controls" style="position:absolute;top:10px;right:10px;display:none;gap:6px;z-index:30;">
+                <button class="btn-icon btn-sm" id="btn-svg-zoom-in" title="Acercar mapa">＋</button>
+                <button class="btn-icon btn-sm" id="btn-svg-zoom-out" title="Alejar mapa">－</button>
+                <button class="btn-icon btn-sm" id="btn-svg-reset-zoom" title="Restablecer vista">⛶</button>
+              </div>
+            </div>
+
+            <div class="map-legend">
+              <div style="display:flex;gap:16px;">
+                <div class="legend-item"><span class="dot-blue"></span><span>En Tránsito</span></div>
+                <div class="legend-item"><span class="dot-green"></span><span>Entregado</span></div>
+                <div class="legend-item"><span class="dot-amber"></span><span>Hub Central</span></div>
+              </div>
+              <span style="font-size:10.5px;color:var(--accent-cyan);">Mapa Ecuador</span>
+            </div>
+          </div>
+
+          <!-- Cola de Operaciones (FIFO Mini Panel) -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="3" width="15" height="13" />
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 8" />
+                </svg>
+                <span>Cola de Operaciones</span>
+              </div>
+              <span class="badge b-blue">FIFO</span>
+            </div>
+
+            <div class="queue-mini-list" id="queue-mini-container"></div>
+
+            <div style="margin-top:16px;text-align:center;">
+              <button class="btn btn-secondary btn-sm" id="btn-goto-ops" style="width:100%;">Ver las operaciones en cola
+                →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla: Gestión Rápida de Clientes -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+              </svg>
+              <span>Gestión Rápida de Clientes</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <select class="form-control" style="width:170px;height:34px;" id="client-quick-filter">
+                <option value="all">Todos los estados</option>
+                <option value="activo">Solo Activos</option>
+                <option value="revision">En Revisión</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>CLIENTE / ID</th>
+                  <th>VOLUMEN (30D)</th>
+                  <th>SLA CUMPLIMIENTO</th>
+                  <th>ESTADO DE CUENTA</th>
+                  <th style="text-align:right;">ACCIÓN</th>
+                </tr>
+              </thead>
+              <tbody id="quick-clients-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA 2: GESTIÓN DE CLIENTES -->
+      <section class="view-section" id="view-clientes">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>Gestión de Clientes</h1>
+            <p class="view-status-line">Administración de entidades y volumen operativo (Lista Enlazada Simple - CRUD).
+            </p>
+          </div>
+          <button class="btn btn-primary" id="btn-open-add-client">
+            <span>+ Nuevo Cliente</span>
+          </button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 300px;gap:24px;">
+          <!-- Directorio Activo -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Directorio Activo</div>
+            </div>
+
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>CLIENTE</th>
+                    <th>VOLUMEN (30D)</th>
+                    <th>ESTADO</th>
+                    <th style="text-align:right;">ACCIONES</th>
+                  </tr>
+                </thead>
+                <tbody id="clients-full-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Resumen del Directorio -->
+          <div class="card" style="height:fit-content;">
+            <div class="filter-section-title" style="margin-bottom:16px;">RESUMEN DEL DIRECTORIO</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div style="background:#090e18;padding:14px;border-radius:8px;border:1px solid var(--border-subtle);">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Total Clientes</div>
+                <div style="font-size:24px;font-weight:700;color:#ffffff;" id="side-total-clients">3</div>
+              </div>
+              <div style="background:#090e18;padding:14px;border-radius:8px;border:1px solid var(--border-subtle);">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Vol. Mensual</div>
+                <div style="font-size:24px;font-weight:700;color:var(--accent-green);">4.2k</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA 3: TABLA DE TARIFAS -->
+      <section class="view-section" id="view-tarifas">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>Tabla de Tarifas</h1>
+            <p class="view-status-line">Gestión centralizada de costos operativos y niveles de servicio (Arreglo
+              Estático O(1)).</p>
+          </div>
+          <div class="header-action-group">
+            <button class="btn btn-primary" id="btn-open-new-rate">
+              <span>+ Nueva Tarifa</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="tarifas-layout">
+          <!-- Filtros de Búsqueda -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title" style="font-size:13px;">Filtros de Búsqueda</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ZONA ORIGEN/DESTINO</label>
+              <select class="form-control" id="filter-zone-select">
+                <option value="all">Todas las Zonas</option>
+                <option value="norte">Zona Norte</option>
+                <option value="centro">Zona Centro</option>
+                <option value="sur">Zona Sur</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">CATEGORÍA DE PESO</label>
+              <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox" id="chk-weight-ligero" checked /> Ligero (0-5
+                  kg)</label>
+                <label class="checkbox-item"><input type="checkbox" id="chk-weight-medio" checked /> Medio (5.1-20
+                  kg)</label>
+                <label class="checkbox-item"><input type="checkbox" id="chk-weight-pesado" checked /> Pesado (20.1-50
+                  kg)</label>
+                <label class="checkbox-item"><input type="checkbox" id="chk-weight-especial" checked /> Carga Especial
+                  (>50 kg)</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">NIVEL DE SERVICIO</label>
+              <div class="service-toggle-group">
+                <div class="toggle-btn active" id="btn-service-express">Express</div>
+                <div class="toggle-btn" id="btn-service-std">Standard</div>
+              </div>
+            </div>
+
+            <button class="btn btn-secondary" style="width:100%;margin-top:8px;" id="btn-apply-filters">Aplicar
+              Filtros</button>
+
+            <div class="tariff-stat-box">
+              <div style="font-size:10.5px;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.06em;">
+                TARIFA PROMEDIO (EXPRESS)</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+                <span style="font-size:22px;font-weight:700;color:var(--accent-green);" id="tariff-stat-avg">$12.50
+                  <span style="font-size:12px;color:var(--text-muted);font-weight:400;">/ base</span></span>
+                <span style="color:var(--accent-green);font-size:16px;">📈</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Matriz de Tarifas Base -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Matriz de Tarifas Base</div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <button class="btn btn-secondary btn-sm" id="btn-bubble-sort"
+                  title="Ordenar lista usando el algoritmo Bubble Sort O(n²)" style="font-size:11px;padding:3px 9px;">
+                  ⇅ Bubble Sort (Precio)
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID RUTA</th>
+                    <th>ORIGEN → DESTINO</th>
+                    <th>TIPO</th>
+                    <th>BASE (0-5KG)</th>
+                    <th>MEDIO (5-20KG)</th>
+                    <th>EXCEDENTE / KG</th>
+                    <th>ESTADO</th>
+                  </tr>
+                </thead>
+                <tbody id="tariffs-tbody"></tbody>
+              </table>
+            </div>
+
+            <div
+              style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:11.5px;color:var(--text-muted);">
+              <span id="tariffs-count-label">Mostrando 8 registros</span>
+              <div style="display:flex;gap:4px;">
+                <button class="btn-icon btn-sm" id="btn-tariff-prev">‹</button>
+                <button class="btn-icon btn-sm" id="btn-tariff-next">›</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA 4: OPERACIONES -->
+      <section class="view-section" id="view-operaciones">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>Despachos</h1>
+            <p class="view-status-line">Visualización en tiempo real: Despacho Activo (FIFO) e Historial de Auditoría
+              (LIFO).</p>
+          </div>
+          <div class="header-action-group">
+            <button class="btn btn-primary" id="btn-ops-new-dispatch">
+              <span>+ New Dispatch</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="ops-layout">
+          <!-- Active Dispatch Queue (Cola FIFO) -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="3" width="15" height="13" />
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 8" />
+                </svg>
+                <span>Active Dispatch Queue</span>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="badge b-gray" style="font-family:var(--font-mono);">FIFO logic</span>
+                <span style="font-size:11.5px;color:var(--text-muted);" id="ops-queue-count">Count: 4</span>
+              </div>
+            </div>
+
+            <div class="queue-full-list" id="queue-full-container"></div>
+          </div>
+
+          <!-- Operation History (Pila LIFO) -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+                <span>Operation History (Entregados)</span>
+              </div>
+              <span class="badge b-green" style="font-family:var(--font-mono);">LIFO stack</span>
+            </div>
+
+            <div class="timeline-stack" id="timeline-stack-container"></div>
+
+            <div style="margin-top:20px;text-align:center;">
+              <button class="btn btn-secondary btn-sm" id="btn-pop-stack" style="width:100%;">
+                <span>Deshacer</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA 5: RED DE RUTAS -->
+      <section class="view-section" id="view-rutas">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>Red Nacional de Transporte (Grafo & Mapa Ecuador)</h1>
+            <p class="view-status-line">Topología de las 20 principales ciudades del Ecuador con rutas y adyacencias.
+            </p>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Topología de Conexiones Activas · 20 Ciudades de Ecuador</div>
+              <button class="btn btn-secondary btn-sm" id="btn-reset-nodes-pos">↻ Reordenar Nodos</button>
+            </div>
+            <div class="map-viewport" style="height:440px;">
+              <div id="leaflet-map-full" style="width:100%;height:100%;"></div>
+            </div>
+          </div>
+
+          <div class="card" style="display:flex;flex-direction:column;gap:16px;">
+            <div class="card-title">Adyacencias Registradas (Grafo)</div>
+            <div id="full-route-cards"
+              style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div>
+            <hr style="border:none;border-top:1px solid var(--border-subtle);" />
+
+            <form id="form-full-ruta">
+              <div class="form-group">
+                <label class="form-label">Ciudad Origen</label>
+                <input class="form-control" id="full-ruta-orig" list="ecuador-cities-list"
+                  placeholder="Selecciona o escribe ciudad origen..." required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ciudad Destino</label>
+                <input class="form-control" id="full-ruta-dest" list="ecuador-cities-list"
+                  placeholder="Selecciona o escribe ciudad destino..." required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Distancia (km)</label>
+                <input class="form-control" id="full-ruta-km" type="number" min="1" max="2500" placeholder="Ej: 420"
+                  required />
+              </div>
+              <button class="btn btn-primary" type="submit" style="width:100%;">Conectar Ruta en el Grafo y
+                Mapa</button>
+            </form>
+
+            <!-- Datalist con 20 Ciudades del Ecuador -->
+            <datalist id="ecuador-cities-list">
+              <option value="Guayaquil"></option>
+              <option value="Quito"></option>
+              <option value="Cuenca"></option>
+              <option value="Santo Domingo"></option>
+              <option value="Machala"></option>
+              <option value="Durán"></option>
+              <option value="Manta"></option>
+              <option value="Portoviejo"></option>
+              <option value="Loja"></option>
+              <option value="Ambato"></option>
+              <option value="Esmeraldas"></option>
+              <option value="Quevedo"></option>
+              <option value="Riobamba"></option>
+              <option value="Milagro"></option>
+              <option value="Ibarra"></option>
+              <option value="La Libertad"></option>
+              <option value="Babahoyo"></option>
+              <option value="Sangolquí"></option>
+              <option value="Daule"></option>
+              <option value="Latacunga"></option>
+            </datalist>
+          </div>
+        </div>
+      </section>
+
+    </main>
   </div>
 
-</main>
+  <!-- MODAL: FLUJO DEL PAQUETE -->
+  <div class="modal-overlay" id="modal-flow">
+    <div class="auth-modal-card" style="max-width:540px;">
+      <div class="auth-card-top" style="text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h2 class="auth-card-title" id="flow-pkg-id">Flujo del Paquete #PKG-8492</h2>
+          <span class="badge b-blue" id="flow-pkg-badge">EN_TRANSITO</span>
+        </div>
+        <p class="auth-card-sub" id="flow-pkg-dest">Destino: Guayaquil · Asignado a Cliente #CLI-0042</p>
+      </div>
 
-<!-- MODAL CLIENTE -->
-<div id="modal" class="overlay">
-  <div class="modal">
-    <div class="modal-head">
-      <h2 id="modal-title">Agregar Cliente</h2>
-      <button class="btn-x" id="btn-close">✕</button>
-    </div>
-    <form id="form-cliente" style="display:flex;flex-direction:column;gap:12px;">
-      <input type="hidden" id="m-id" />
-      <div class="field-group"><label class="lbl">Nombre *</label><input class="field" id="m-nombre" placeholder="Nombre completo" /></div>
-      <div class="field-group"><label class="lbl">Teléfono *</label><input class="field" id="m-tel" placeholder="0991234567" /></div>
-      <div class="field-group"><label class="lbl">Ciudad</label><input class="field" id="m-ciudad" placeholder="Quito" /></div>
+      <!-- Stepper Visual de 4 Etapas -->
+      <div class="flow-stepper-container">
+        <div class="flow-stepper-line">
+          <div class="flow-stepper-progress" id="flow-stepper-bar"></div>
+        </div>
+
+        <div class="flow-step-node completed" id="step-1">
+          <div class="flow-step-circle">📦</div>
+          <span class="flow-step-label">Registrado</span>
+        </div>
+
+        <div class="flow-step-node completed" id="step-2">
+          <div class="flow-step-circle">⏳</div>
+          <span class="flow-step-label">En Cola</span>
+        </div>
+
+        <div class="flow-step-node active" id="step-3">
+          <div class="flow-step-circle">🚚</div>
+          <span class="flow-step-label">En Tránsito</span>
+        </div>
+
+        <div class="flow-step-node" id="step-4">
+          <div class="flow-step-circle">📍</div>
+          <span class="flow-step-label">Entregado</span>
+        </div>
+      </div>
+
+      <div
+        style="background:#090e18;border:1px solid var(--border-subtle);border-radius:8px;padding:16px;margin:20px 0;">
+        <div
+          style="font-size:11.5px;color:var(--text-muted);display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span>Peso del Envío: <strong style="color:#ffffff;" id="flow-pkg-weight">12.5 kg</strong></span>
+          <span>Tarifa Calculada: <strong style="color:var(--accent-green);" id="flow-pkg-cost">$450.00</strong></span>
+        </div>
+        <div style="font-size:11.5px;color:var(--text-subtle);" id="flow-pkg-log">
+          Último reporte: El paquete se encuentra navegando a través de la red del Grafo.
+        </div>
+      </div>
+
       <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button type="button" class="btn btn-secondary" id="btn-cancel">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="button" class="btn btn-secondary" id="btn-close-flow-modal">Cerrar</button>
+        <button type="button" class="btn btn-success" id="btn-mark-delivered">✓ Confirmar Llegada (Entregado)</button>
       </div>
-    </form>
+    </div>
   </div>
-</div>
 
-<div id="toasts"></div>
-<script type="module" src="src/app.js"></script>
+  <!-- MODAL: NUEVO CLIENTE -->
+  <div class="modal-overlay" id="modal-client">
+    <div class="auth-modal-card" style="max-width:480px;">
+      <div class="auth-card-top" style="text-align:left;">
+        <h2 class="auth-card-title" id="client-modal-title">Registrar Nuevo Cliente</h2>
+        <p class="auth-card-sub">Inserción con ID Único en Lista Enlazada</p>
+      </div>
+
+      <form id="form-client-entity">
+        <input type="hidden" id="modal-cli-id" />
+        <div class="form-group">
+          <label class="form-label">Nombre de la Empresa o Cliente *</label>
+          <input class="form-control" id="modal-cli-name" type="text" placeholder="Ej: Industrias Apex" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Teléfono de Contacto (7-10 dígitos) *</label>
+          <input class="form-control" id="modal-cli-phone" type="tel" placeholder="Ej: 0991234567" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ciudad / Dirección en Ecuador *</label>
+          <input class="form-control" id="modal-cli-address" list="ecuador-cities-list"
+            placeholder="Ej: Guayaquil, Av. 9 de Octubre" required />
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-client-modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: NUEVO ENVÍO -->
+  <div class="modal-overlay" id="modal-shipment">
+    <div class="auth-modal-card" style="max-width:480px;">
+      <div class="auth-card-top" style="text-align:left;">
+        <h2 class="auth-card-title">Registrar Nuevo Envío</h2>
+        <p class="auth-card-sub">Asignación de Cliente Existente e ID Único sin Duplicados</p>
+      </div>
+
+      <form id="form-shipment-entity">
+        <div class="form-group">
+          <label class="form-label">Cliente Emisor Asignado *</label>
+          <select class="form-control" id="ship-client-select" required></select>
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+            <label class="form-label">Tracking ID Único (BST) *</label>
+            <span style="font-size:10.5px;color:var(--accent-cyan);cursor:pointer;font-weight:600;"
+              id="btn-auto-gen-pkg-id">⚡ Generar ID Único</span>
+          </div>
+          <input class="form-control" id="ship-id" type="number" min="1" placeholder="Ej: 8496" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Peso en Balanza (kg) *</label>
+          <input class="form-control" id="ship-weight" type="number" step="0.1" min="0.1" max="10000"
+            placeholder="Ej: 12.5" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Ciudad Destino en Ecuador *</label>
+          <input class="form-control" id="ship-destination" list="ecuador-cities-list" placeholder="Ej: Guayaquil"
+            required />
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-shipment-modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Registrar y Encolar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONTENEDOR DE TOASTS -->
+  <div id="toasts"></div>
+
+  <!-- Leaflet Map API JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- SCRIPT PRINCIPAL -->
+  <script type="module" src="src/app.js"></script>
 </body>
+
 </html>

@@ -9,7 +9,6 @@ export class TablaTarifas {
     ];
   }
 
-  // ACCESO POR INDÍCE 
   obtenerPorIndice(i) {
     return this.tarifas[i] || null;
   }
@@ -21,5 +20,24 @@ export class TablaTarifas {
       }
     }
     return this.tarifas[4];
+  }
+
+  // (ALGORITMO BUBBLE SORT)(Ordena una lista de rutas o tarifas comparando pares adyacentes con complejidad O(n^2))
+  bubbleSort(arreglo, clave = 'baseNum', ascendente = true) {
+    const arr = [...arreglo];
+    const n = arr.length;
+    for (let i = 0; i < n - 1; i++) {
+      for (let j = 0; j < n - i - 1; j++) {
+        const valA = arr[j][clave];
+        const valB = arr[j + 1][clave];
+        const condicion = ascendente ? valA > valB : valA < valB;
+        if (condicion) {
+          const temp = arr[j];
+          arr[j] = arr[j + 1];
+          arr[j + 1] = temp;
+        }
+      }
+    }
+    return arr;
   }
 }

@@ -21,6 +21,10 @@ export class Cola {
         return this.pedidos.length === 0;
     }
 
+    eliminarPorId(id) {
+        this.pedidos = this.pedidos.filter(p => p.id !== id);
+    }
+
     obtenerCola() {
         return [...this.pedidos];
     }

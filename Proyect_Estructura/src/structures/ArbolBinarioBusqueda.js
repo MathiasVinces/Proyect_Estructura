@@ -42,7 +42,6 @@ export class ArbolBinarioBusqueda {
 
     _buscarNodo(nodo, id) {
         if (nodo === null) return null;
-
         if (id < nodo.paquete.id) {
             return this._buscarNodo(nodo.izquierda, id);
         } else if (id > nodo.paquete.id) {
