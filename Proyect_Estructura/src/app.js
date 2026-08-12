@@ -233,6 +233,24 @@ function updateClientDropdown() {
   `).join('') : '<option value="">No hay clientes registrados</option>';
 }
 
+// Calculate client volume (kg) in the last 30 days.
+// - If the client has packages with `fecha` within 30 days, sum their `peso`.
+// - If no recent packages and the client is one of the example clients, return a fixed sample value (400-800 kg).
+// - Otherwise return 0.
+const SAMPLE_CLIENT_VOLUME_KG = { 42: 520, 43: 560, 44: 610 };
+function getClientVolume30D(clientId) {
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const pkgs = listaPaquetes.obtenerTodos().filter(p => {
+    try {
+      return p.clienteId === clientId && p.fecha && (now - new Date(p.fecha).getTime() <= THIRTY_DAYS_MS);
+    } catch (e) { return false; }
+  });
+  if (pkgs.length) return pkgs.reduce((s, p) => s + (Number(p.peso) || 0), 0);
+  if (SAMPLE_CLIENT_VOLUME_KG[clientId]) return SAMPLE_CLIENT_VOLUME_KG[clientId];
+  return 0;
+}
+
 function renderClients() {
   const clients = listaClientes.obtenerTodos();
   $('quick-clients-tbody').innerHTML = clients.slice(0, 4).map(c => `
@@ -246,7 +264,7 @@ function renderClients() {
           </div>
         </div>
       </td>
-      <td style="font-family:var(--font-mono);font-weight:600;">${(c.id * 320 + 200).toLocaleString()} TEU</td>
+      <td style="font-family:var(--font-mono);font-weight:600;">${Math.round(getClientVolume30D(c.id)).toLocaleString()} kg</td>
       <td><div style="width:100px;background:#172338;height:5px;border-radius:3px;"><div style="width:${Math.min(99, 85 + c.id * 2)}%;background:var(--accent-green);height:100%;"></div></div></td>
       <td><span class="badge b-green">• Activo</span></td>
       <td style="text-align:right;"><button class="btn-icon btn-sm" onclick="editClient(${c.id})">✎</button></td>
@@ -264,7 +282,7 @@ function renderClients() {
           </div>
         </div>
       </td>
-      <td style="font-family:var(--font-mono);font-weight:600;">${(c.id * 410 + 100).toLocaleString()} TEU</td>
+      <td style="font-family:var(--font-mono);font-weight:600;">${Math.round(getClientVolume30D(c.id)).toLocaleString()} kg</td>
       <td><span class="badge b-green">• Activo</span></td>
       <td style="text-align:right;">
         <div style="display:inline-flex;gap:6px;">
@@ -342,7 +360,7 @@ const modalShipment = $('modal-shipment');
 function openShipmentModal() {
   $('form-shipment-entity').reset();
   updateClientDropdown();
-  $('ship-id').value = getNextUniquePackageId();
+  // ID will be auto-generated on submit; hide relying on manual input
   modalShipment.classList.add('open');
 }
 
@@ -350,29 +368,28 @@ $('btn-new-shipment-top').onclick = openShipmentModal;
 $('btn-ops-new-dispatch').onclick = openShipmentModal;
 $('btn-cancel-shipment-modal').onclick = () => modalShipment.classList.remove('open');
 modalShipment.onclick = e => { if (e.target === modalShipment) modalShipment.classList.remove('open'); };
-$('btn-auto-gen-pkg-id').onclick = () => { $('ship-id').value = getNextUniquePackageId(); showToast('ID único generado.', 'info'); };
 
 $('form-shipment-entity').onsubmit = e => {
   e.preventDefault();
-  const id = parseInt($('ship-id').value);
+  // auto-generate a unique package id (remove manual Tracking ID input requirement)
+  const id = getNextUniquePackageId();
   const cliId = parseInt($('ship-client-select').value);
   const peso = parseFloat($('ship-weight').value);
   const dest = $('ship-destination').value.trim();
 
-  if (isNaN(id) || id <= 0) return showToast('El Tracking ID debe ser positivo.', 'warning');
-  if (bst.buscar(id) || listaPaquetes.buscar(id)) return showToast(`Error: El Tracking ID #PKG-${id} ya existe.`, 'error');
   if (isNaN(cliId) || !listaClientes.buscar(cliId)) return showToast('Seleccione un cliente registrado.', 'warning');
   if (isNaN(peso) || peso <= 0 || peso > 10000) return showToast('Peso inválido (0.1 a 10,000 kg).', 'warning');
   if (!dest || dest.length < 3) return showToast('Ingrese una ciudad de destino válida.', 'warning');
 
   const tarifa = tablaTarifas.calcularTarifa(peso);
-  const pkg = new Paquete(id, cliId, peso, dest, tarifa.precio);
+  const pkg = new Paquete(id, cliId, peso, dest, tarifa.precio, new Date().toISOString());
   listaPaquetes.insertar(pkg);
   bst.insertar(pkg);
   cola.encolar(pkg);
 
   modalShipment.classList.remove('open');
   renderQueue();
+  renderClients();
   updateMetrics();
   showToast(`Paquete #PKG-${id} encolado en FIFO e indexado en BST.`, 'success');
 };
@@ -383,6 +400,7 @@ window.despacharPaquete = id => {
   if (!pkg) return showToast(`Paquete PKG-${id} no encontrado.`, 'error');
   pkg.estado = 'EN_TRANSITO';
   renderQueue();
+  renderClients();
   if (currentInspectedPkgId === id) openPackageFlowModal(id);
   showToast(`Paquete PKG-${id} puesto en tránsito hacia ${pkg.destino}. Sigue en cola activa.`, 'info');
 };
@@ -395,6 +413,7 @@ window.entregarPaquete = id => {
   pila.apilar(`PKG-${pkg.id} ENTREGADO: Entrega completada con éxito en ${pkg.destino} (Cliente CLI-00${pkg.clienteId})`);
   renderQueue();
   renderOperationsTimeline();
+  renderClients();
   updateMetrics();
   if (currentInspectedPkgId === id) openPackageFlowModal(id);
   showToast(`¡Paquete PKG-${id} entregado con éxito! Transferido a Operation History.`, 'success');
@@ -472,9 +491,11 @@ $('btn-mark-delivered').onclick = () => {
 // (RENDERIZADO DE COLA Y PILA)(Actualiza visualmente la lista FIFO y el historial de entregas LIFO)
 function renderQueue() {
   const items = cola.obtenerCola();
-  $('queue-mini-container').innerHTML = items.length === 0 ? `
+  // Show newest items first in the UI (most-recent on top)
+  const itemsForDisplay = items.slice().reverse();
+  $('queue-mini-container').innerHTML = itemsForDisplay.length === 0 ? `
     <div style="padding:20px;text-align:center;color:var(--text-subtle);font-size:12px;">✓ No hay paquetes pendientes en la cola.</div>
-  ` : items.slice(0, 3).map((p, i) => `
+  ` : itemsForDisplay.slice(0, 3).map((p, i) => `
     <div class="queue-card-item">
       <div class="queue-item-header">
         <span class="queue-id-tag">#PKG-${p.id} · CLI-00${p.clienteId}</span>
@@ -488,17 +509,17 @@ function renderQueue() {
     </div>`).join('');
 
   $('ops-queue-count').textContent = `Count: ${items.length}`;
-  $('queue-full-container').innerHTML = items.length === 0 ? `
+  $('queue-full-container').innerHTML = itemsForDisplay.length === 0 ? `
     <div style="padding:34px;text-align:center;color:var(--text-subtle);font-size:13px;background:var(--bg-card-elevated);border-radius:var(--radius-md);border:1px dashed var(--border-card);">
       ✓ Todos los envíos han sido entregados con éxito y transferidos a Operation History.
     </div>
-  ` : items.map((p, i) => `
+  ` : itemsForDisplay.map((p, i) => `
     <div class="queue-full-card ${i === 0 ? 'head-next' : ''}">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div style="display:flex;align-items:center;gap:8px;">
           <strong style="font-family:var(--font-mono);font-size:14px;color:#ffffff;">PKG-${p.id}</strong>
           <span style="font-size:11px;color:var(--accent-cyan);font-family:var(--font-mono);">[CLI-00${p.clienteId}]</span>
-          <span class="badge ${p.estado === 'EN_TRANSITO' ? 'b-blue' : (i === 0 ? 'b-green' : 'b-amber')}">${p.estado === 'EN_TRANSITO' ? '● EN TRÁNSITO' : (i === 0 ? '● HEAD (NEXT)' : '● EN QUEUE')}</span>
+          <span class="badge ${p.estado === 'EN_TRANSITO' ? 'b-blue' : (i === 0 ? 'b-green' : 'b-amber')}">${p.estado === 'EN_TRANSITO' ? '● EN TRÁNSITO' : (i === 0 ? '● NUEVO' : '● EN QUEUE')}</span>
         </div>
         <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">T-00:15:42 · FIFO</span>
       </div>
@@ -522,7 +543,7 @@ function renderOperationsTimeline() {
       <div class="timeline-content">
         <div class="timeline-meta">
           <div style="display:flex;gap:6px;align-items:center;">
-            <strong style="font-family:var(--font-mono);color:#ffffff;font-size:12px;">OP-${8491 - i}</strong>
+            <!-- OP code hidden -->
             <span class="badge ${i === 0 ? 'b-green' : 'b-gray'}">${i === 0 ? 'TOP (LAST IN)' : 'ENTREGADO'}</span>
           </div>
           <span style="font-size:10.5px;color:var(--text-subtle);font-family:var(--font-mono);">08:4${Math.max(0, 5 - i)}:12 AM</span>
@@ -910,9 +931,9 @@ function init() {
   ].forEach(c => listaClientes.insertar(c));
 
   [
-    new Paquete(8492, 42, 1240.0, 'Guayaquil', 450.0),
-    new Paquete(8493, 43, 850.0, 'Quito', 280.0),
-    new Paquete(8494, 44, 1120.0, 'Cuenca', 340.0),
+    new Paquete(8492, 42, 520.0, 'Guayaquil', 450.0),
+    new Paquete(8493, 43, 560.0, 'Quito', 280.0),
+    new Paquete(8494, 44, 610.0, 'Cuenca', 340.0),
     new Paquete(8495, 42, 450.0, 'Manta', 190.0)
   ].forEach(p => { listaPaquetes.insertar(p); bst.insertar(p); cola.encolar(p); });
 
