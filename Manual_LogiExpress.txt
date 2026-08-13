@@ -1,0 +1,36 @@
+MANUAL DE USUARIO: LOGIEXPRESS COMMAND CENTER
+================================================
+
+1. INTRODUCCIÓN
+LogiExpress Command Center es una plataforma logística integral diseñada para la gestión de envíos, clientes, tarifas y rutas. Su motor operativo se basa en estructuras de datos avanzadas como listas enlazadas, colas (FIFO), pilas (LIFO) y grafos.
+
+2. RESUMEN (DASHBOARD)
+La vista principal permite monitorear:
+- KPIs: Envíos activos, clientes totales, eficiencia de ruta e ingresos diarios.
+- Mapa de Rutas: Visualización geográfica en tiempo real del estado de los envíos.
+- Cola de Operaciones (FIFO): Seguimiento de paquetes en espera de procesamiento.
+- Gestión Rápida: Tabla resumen de clientes con estado de cuenta y cumplimiento SLA.
+
+3. MÓDULO DE CLIENTES
+Administración de entidades basada en Listas Enlazadas (CRUD):
+- Directorio Activo: Visualización de clientes con datos de contacto, tipo de industria y volumen operativo.
+- Registro/Edición: Formulario para añadir nuevos clientes con ID único, evitando duplicados.
+
+4. MÓDULO DE TARIFAS
+Gestión de costos operativos:
+- Filtros: Selección por zona, peso (Ligero, Medio, Pesado, Especial) y nivel de servicio (Express/Standard).
+- Matriz de Costos: Visualización de rutas con costos base y excedentes. Soporta ordenamiento mediante algoritmos como Bubble Sort.
+
+5. MÓDULO DE OPERACIONES
+Gestión de despachos:
+- Active Dispatch Queue (FIFO): Proceso de salida de mercancía.
+- Operation History (LIFO): Historial de entregas con capacidad de deshacer la última acción.
+- Registro: Formulario para crear un nuevo envío ligado a un cliente existente.
+
+6. MÓDULO DE RUTAS
+Administración de la red logística (Topología de Grafos):
+- Mapa de Conexiones: Visualización de nodos entre 20 ciudades del Ecuador.
+- Conector de Rutas: Herramienta para registrar nuevas adyacencias (ciudades y distancias) en el grafo del sistema.
+
+---
+LogiExpress Command Center - © 2026
