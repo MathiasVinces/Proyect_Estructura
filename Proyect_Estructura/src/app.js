@@ -176,7 +176,9 @@ function showToast(msg, type = 'success') {
 
 function updateLiveClock() {
   const now = new Date();
-  $('live-clock').textContent = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')} UTC`;
+  // Show clock in Ecuador timezone (America/Guayaquil)
+  const timeEc = now.toLocaleTimeString('es-EC', { hour12: false, timeZone: 'America/Guayaquil' });
+  $('live-clock').textContent = `${timeEc} ECT`;
 }
 setInterval(updateLiveClock, 1000);
 updateLiveClock();
@@ -491,9 +493,11 @@ $('btn-mark-delivered').onclick = () => {
 // (RENDERIZADO DE COLA Y PILA)(Actualiza visualmente la lista FIFO y el historial de entregas LIFO)
 function renderQueue() {
   const items = cola.obtenerCola();
-  // Show newest items first in the UI (most-recent on top)
-  const itemsForDisplay = items.slice().reverse();
-  $('queue-mini-container').innerHTML = itemsForDisplay.length === 0 ? `
+  // Preserve FIFO ordering (index 0 is head of queue)
+  const itemsForDisplay = items.slice();
+
+  // Mini queue (show up to 3)
+  const miniHtml = itemsForDisplay.length === 0 ? `
     <div style="padding:20px;text-align:center;color:var(--text-subtle);font-size:12px;">✓ No hay paquetes pendientes en la cola.</div>
   ` : itemsForDisplay.slice(0, 3).map((p, i) => `
     <div class="queue-card-item">
@@ -508,12 +512,22 @@ function renderQueue() {
       </div>
     </div>`).join('');
 
+  $('queue-mini-container').innerHTML = miniHtml;
+
+  // Full queue
   $('ops-queue-count').textContent = `Count: ${items.length}`;
-  $('queue-full-container').innerHTML = itemsForDisplay.length === 0 ? `
+  const fullHtml = itemsForDisplay.length === 0 ? `
     <div style="padding:34px;text-align:center;color:var(--text-subtle);font-size:13px;background:var(--bg-card-elevated);border-radius:var(--radius-md);border:1px dashed var(--border-card);">
       ✓ Todos los envíos han sido entregados con éxito y transferidos a Operation History.
     </div>
-  ` : itemsForDisplay.map((p, i) => `
+  ` : itemsForDisplay.map((p, i) => {
+    // Format package timestamp in Ecuador timezone
+    let timeEc = '—';
+    try {
+      timeEc = new Date(p.fecha).toLocaleTimeString('es-EC', { hour12: false, timeZone: 'America/Guayaquil' });
+    } catch (e) { /* ignore and leave placeholder */ }
+
+    return `
     <div class="queue-full-card ${i === 0 ? 'head-next' : ''}">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div style="display:flex;align-items:center;gap:8px;">
@@ -521,7 +535,7 @@ function renderQueue() {
           <span style="font-size:11px;color:var(--accent-cyan);font-family:var(--font-mono);">[CLI-00${p.clienteId}]</span>
           <span class="badge ${p.estado === 'EN_TRANSITO' ? 'b-blue' : (i === 0 ? 'b-green' : 'b-amber')}">${p.estado === 'EN_TRANSITO' ? '● EN TRÁNSITO' : (i === 0 ? '● NUEVO' : '● EN QUEUE')}</span>
         </div>
-        <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">T-00:15:42 · FIFO</span>
+        <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">T-${timeEc} · FIFO</span>
       </div>
       <div style="font-size:13px;font-weight:600;color:#ffffff;margin-top:2px;">Despacho - Destino ${p.destino}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:center;margin-top:6px;background:rgba(0,0,0,0.25);padding:10px 14px;border-radius:6px;">
@@ -530,7 +544,11 @@ function renderQueue() {
         <button class="btn btn-secondary btn-sm" onclick="openPackageFlowModal(${p.id})">Flujo</button>
         ${p.estado === 'REGISTRADO' ? `<button class="btn btn-primary btn-sm" onclick="despacharPaquete(${p.id})">▶ Despachar</button>` : `<button class="btn btn-success btn-sm" onclick="entregarPaquete(${p.id})">✓ Entregar</button>`}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+
+  $('queue-full-container').innerHTML = fullHtml;
+
 }
 
 function renderOperationsTimeline() {
